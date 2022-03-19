@@ -1,0 +1,16 @@
+---
+- name: get pip packages available
+  shell:
+    cmd: /usr/bin/python3 -m pip freeze
+  register: pip_freeze_cmd
+  changed_when: no
+
+- name: install netaddr
+  shell:
+    cmd: /usr/bin/python3 -m pip install netaddr
+  when: "'netaddr' not in pip_freeze_cmd.stdout"
+
+- name: install dnspython
+  shell:
+    cmd: /usr/bin/python3 -m pip install dnspython
+  when: "'dnspython' not in pip_freeze_cmd.stdout"

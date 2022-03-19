@@ -1,0 +1,3 @@
+---
+- include_tasks: get_vars.yml
+- include_tasks: netplan.yml

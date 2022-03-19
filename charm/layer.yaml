@@ -1,0 +1,13 @@
+includes:
+  - 'layer:basic'
+  - 'interface:juju-info'
+# NOTE: Couldn't get this to work. Had to resort to roles/pip-prereqs.
+#options:
+#  basic:
+#    use_venv: true
+#    python_packages:
+#      - ansible
+#      - netaddr
+#      - dnspython
+#    include_system_packages: false
+repo: https://https://github.com/jpuskar/charm-static-ip

@@ -1,0 +1,21 @@
+---
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    {{ interface_name }}:
+      dhcp4: no
+      addresses:
+      - {{ current_ipv4_with_cidr }}
+      gateway4: {{ current_ipv4_gw }}
+      nameservers:
+{% if search_domain %}
+        search:
+{% for search_domain in search_domains %}
+        - {{ search_domain }}
+{% endfor %}
+{% endif %}
+        addresses:
+{% for dns_server in current_dns_servers %}
+        - {{ dns_server }}
+{% endfor %}

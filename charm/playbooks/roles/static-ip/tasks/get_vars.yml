@@ -1,0 +1,49 @@
+---
+- name: set current_ipv4_full fact
+  set_fact:
+    current_ipv4_full: "{{ ansible_ens192.ipv4.address }}/{{ ansible_ens192.ipv4.netmask }}"
+
+- name: set current_ip_with_cidr fact
+  set_fact:
+    current_ipv4_with_cidr: "{{ current_ipv4_full | ansible.netcommon.ipaddr('address/prefix') }}"
+
+- name: set current_ip_gw fact
+  set_fact:
+    current_ipv4_gw: "{{ ansible_default_ipv4.gateway }}"
+
+- name: run command to get current dns servers
+  shell:
+    cmd: |
+      resolvectl --interface={{ interface_name }} dns | cut -f 2 -d ':' | sed -e 's/^[[:space:]]*//'
+  register: _get_dns_servers_cmd
+
+- name: show _get_dns_servers_cmd
+  debug:
+    var: _get_dns_servers_cmd
+
+- name: set current_dns_servers fact
+  set_fact:
+    current_dns_servers: "{{ (_get_dns_servers_cmd.stdout).split(' ') | list }}"
+
+- name: show current_dns_servers
+  debug:
+    var: current_dns_servers
+
+- name: assert that dns servers were picked up
+  assert:
+    that:
+      - 'current_dns_servers != ""'
+      - 'current_dns_servers[0] != ""'
+      - '(current_dns_servers | length) > 0'
+
+- name: limit to 2 dns servers
+  set_fact:
+    current_dns_servers: "{{ current_dns_servers[0:2] }}"
+  when: "(current_dns_servers | length) > 2"
+
+- name: assert that dns servers are resolvable
+  assert:
+    that:
+      - lookup('dig', dns_lookup_test_fqdn, ( '@' + item )) != "NXDOMAIN"
+  loop: "{{ current_dns_servers }}"
+  register: assert_dns_servers

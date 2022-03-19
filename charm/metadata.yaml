@@ -1,0 +1,13 @@
+name: static-ip
+display-name: static-ip
+summary: Configures a static IP based on the current DHCP address.
+maintainer: John Puskar <john.puskar@gmail.com>
+description: Configures the system to use a static IP based on its current DHCP address.
+tags:
+  - ops
+series: ["focal"]
+subordinate: true
+requires:
+  host-system:
+    interface: juju-info
+    scope: container

@@ -1,0 +1,74 @@
+---
+- name: render netplan.yml
+  template:
+    src: netplan.yml
+    dest: /etc/netplan/01-netcfg.yaml
+    backup: yes
+    owner: root
+    group: root
+    mode: 0644
+  register: render_netplan_template
+
+- name: stat /etc/netplan/01-netcfg.yaml
+  stat:
+    checksum_algorithm: md5
+    path: "/etc/netplan/01-netcfg.yaml"
+  register: stat_netplan
+
+- name: set new_netplan_md5
+  set_fact:
+    new_netplan_md5: "{{ stat_netplan.stat.checksum }}"
+
+- name: stat for /etc/netplan/last_applied.md5
+  stat:
+    path: "/etc/netplan/last_applied.md5"
+  register: _stat_last_applied
+
+- name: set last_applied_missing fact
+  set_fact:
+    last_applied_exists: "{{ true if _stat_last_applied.stat.exists else false }}"
+
+- name: slurp /etc/netplan/last_applied.md5
+  ansible.builtin.slurp:
+    src: "/etc/netplan/last_applied.md5"
+  register: slurp_last_applied
+  when: last_applied_exists
+
+- name: set last_applied_md5 fact (if missing)
+  set_fact:
+    last_applied_md5: "missing"
+  when: not last_applied_exists
+
+- name: set last_applied_md5 fact
+  set_fact:
+    last_applied_md5: "{{ slurp_last_applied.content | b64decode | trim }}"
+  when: last_applied_exists
+
+- name: set needs_netplan_apply fact
+  set_fact:
+    needs_netplan_apply: "{{ (not last_applied_exists) or (new_netplan_md5 != last_applied_md5) }}"
+
+- name: render 99-disable-network-config.cfg
+  copy:
+    src: files/99-disable-network-config.cfg
+    dest: /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
+    owner: root
+    group: root
+    mode: 0644
+
+- name: remove /etc/netplan/50-cloud-init.yaml
+  file:
+    state: absent
+    path: /etc/netplan/50-cloud-init.yaml
+
+- name: run netplan apply
+  shell:
+    cmd: netplan apply
+  when: needs_netplan_apply
+
+- name: write /etc/netplan/last_applied.md5
+  copy:
+    content: "{{ new_netplan_md5 }}"
+    dest: "/etc/netplan/last_applied.md5"
+    backup: yes
+  when: needs_netplan_apply

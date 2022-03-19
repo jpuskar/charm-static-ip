@@ -1,0 +1,4 @@
+---
+search_domains: []
+dns_lookup_test_fqdn: 'www.google.com'
+interface_name: ens192

@@ -1,0 +1,11 @@
+#!/usr/local/sbin/charm-env python3
+
+from charms.reactive import main, set_state
+from charmhelpers.core.hookenv import action_fail, action_name
+
+
+set_state(f'actions.{action_name()}')
+try:
+    main()
+except Exception as e:
+    action_fail(repr(e))

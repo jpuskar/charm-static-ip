@@ -1,0 +1,5 @@
+options:
+  search_domains:
+    default: ''
+    description: Search domains to add to netplan.
+    type: string
